@@ -57,6 +57,10 @@ class SpotLight extends Light {
         this.outerCutOff = outerCutOff;
     }
 
+    draw() {
+        // SpotLight drawing handled in PointLight
+    }
+
     update(gl, programInfo, position, front)  {
         gl.uniform3f(programInfo.uniformLocations.spotLightPosition, position[0], position[1], position[2]);
         gl.uniform3f(programInfo.uniformLocations.spotLightDirection, front[0], front[1], front[2]);
