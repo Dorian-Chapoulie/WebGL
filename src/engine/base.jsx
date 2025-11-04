@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from "react";
 import { mat4, vec3 } from "gl-matrix";
 import { Cube } from "./models/Cube";
 import { LightCube } from "./models/LightCube";
+import { GltfModel } from "./models/GltfModel";
 
 
 import vsSource from "./shaders/vertex/base.vert";
@@ -26,6 +27,7 @@ let i = 0;
 
 let cubes = [];
 const lights = [];
+let gltfModel = null;
 
 export const Engine = () => {
     const canvasRef = useRef(null);
@@ -181,12 +183,12 @@ export const Engine = () => {
             gl.uniformMatrix4fv(lightCubeProgramInfo.uniformLocations.viewMatrix, false, viewMatrix);
         }
 
-        const initScene = () => {
+        const initScene = async () => {
             const fieldOfView = (45 * Math.PI) / 180; // en radians
             const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
             const zNear = 0.1;
             const zFar = 100.0;
-            
+
             cameraPosition = vec3.create();
             vec3.set(cameraPosition, 0, 0, 3);
             cameraFront = vec3.create();
@@ -212,6 +214,15 @@ export const Engine = () => {
                 const cube = new Cube(gl, programInfo);
                 cube.setCubeIndex(i);
                 cubes.push(cube);
+            }
+
+            // Charger le modèle GLTF
+            gltfModel = new GltfModel(gl, programInfo);
+            try {
+                await gltfModel.load('/src/engine/models/Gltf/scene.gltf');
+                console.log('Modèle GLTF chargé avec succès!');
+            } catch (error) {
+                console.error('Erreur lors du chargement du modèle GLTF:', error);
             }
 
             setupAdvancedLighting(gl, programInfo, cameraPosition, cameraFront);
@@ -296,7 +307,7 @@ export const Engine = () => {
             gl.enable(gl.DEPTH_TEST);
             gl.clearColor(0.1, 0.1, 0.1, 1.0); // Couleur de fond comme dans le code C++
             gl.clearDepth(1.0); // tout effacer
-          
+
             // Effacer le canvas avant que nous ne commencions à dessiner dessus.
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -308,6 +319,12 @@ export const Engine = () => {
             cubes.forEach((cube, index) => {
                 cube.draw(gl, programInfo, viewMatrix, projectionMatrix, cubePositions[index]);
             });
+
+            // Dessiner le modèle GLTF
+            if (gltfModel && gltfModel.isLoaded) {
+                const rotation = a * 0.01; // Rotation progressive
+                gltfModel.draw(gl, programInfo, viewMatrix, projectionMatrix, [0, 0, -5], [2, 2, 2], rotation);
+            }
 
             gl.useProgram(lightCubeProgramInfo.program);
             lights.forEach((light) => {
