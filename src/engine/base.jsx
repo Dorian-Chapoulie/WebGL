@@ -299,7 +299,7 @@ export const Engine = () => {
                     cutOff: Math.cos(12.5 * Math.PI / 180),
                     outerCutOff: Math.cos(15.0 * Math.PI / 180),
                 }});
-                //lights.push(spotLight);
+                lights.push(spotLight);
             }
         }
 
@@ -316,9 +316,9 @@ export const Engine = () => {
             lights.forEach((light) => {
                 light.update(gl, programInfo, cameraPosition, cameraFront);
             });
-            cubes.forEach((cube, index) => {
-                cube.draw(gl, programInfo, viewMatrix, projectionMatrix, cubePositions[index]);
-            });
+            // cubes.forEach((cube, index) => {
+            //     cube.draw(gl, programInfo, viewMatrix, projectionMatrix, cubePositions[index]);
+            // });
 
             // Dessiner le modèle GLTF
             if (gltfModel && gltfModel.isLoaded) {
@@ -326,10 +326,10 @@ export const Engine = () => {
                 gltfModel.draw(gl, programInfo, viewMatrix, projectionMatrix, [0, 0, -5], [2, 2, 2], rotation);
             }
 
-            gl.useProgram(lightCubeProgramInfo.program);
-            lights.forEach((light) => {
-                light.draw(gl, lightCubeProgramInfo, viewMatrix, projectionMatrix);
-            });
+            // gl.useProgram(lightCubeProgramInfo.program);
+            // lights.forEach((light) => {
+            //     light.draw(gl, lightCubeProgramInfo, viewMatrix, projectionMatrix);
+            // });
         }
 
         // Utiliser le shader de lighting avancé
