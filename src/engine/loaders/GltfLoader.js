@@ -29,10 +29,23 @@ export class GltfLoader {
 
     async loadBuffers(basePath) {
         const bufferPromises = this.gltfData.buffers.map(async (bufferInfo) => {
-            const bufferUri = basePath + bufferInfo.uri;
-            const response = await fetch(bufferUri);
-            const arrayBuffer = await response.arrayBuffer();
-            return arrayBuffer;
+            // Vérifier si c'est une Data URI (base64 embedded)
+            if (bufferInfo.uri.startsWith('data:')) {
+                // Extraire les données base64
+                const base64Data = bufferInfo.uri.split(',')[1];
+                const binaryString = atob(base64Data);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                return bytes.buffer;
+            } else {
+                // Charger depuis un fichier externe
+                const bufferUri = basePath + bufferInfo.uri;
+                const response = await fetch(bufferUri);
+                const arrayBuffer = await response.arrayBuffer();
+                return arrayBuffer;
+            }
         });
 
         this.buffers = await Promise.all(bufferPromises);
@@ -48,7 +61,16 @@ export class GltfLoader {
                 const img = new Image();
                 img.onload = () => resolve(img);
                 img.onerror = reject;
-                img.src = basePath + imageInfo.uri;
+
+                // Vérifier si c'est une Data URI (base64 embedded)
+                if (imageInfo.uri && imageInfo.uri.startsWith('data:')) {
+                    img.src = imageInfo.uri;
+                } else if (imageInfo.uri) {
+                    img.src = basePath + imageInfo.uri;
+                } else {
+                    // Si pas d'URI, l'image peut être dans un bufferView
+                    reject(new Error('BufferView images not yet supported'));
+                }
             });
         });
 

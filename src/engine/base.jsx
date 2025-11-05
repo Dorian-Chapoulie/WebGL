@@ -6,6 +6,7 @@ import { GltfModel } from "./models/GltfModel";
 
 
 import vsSource from "./shaders/vertex/base.vert";
+import skinnedVsSource from "./shaders/vertex/skinned.vert";
 import fsSource from "./shaders/fragment/base.frag";
 import lightCubeFsSource from "./shaders/fragment/light_cube.frag";
 import { LightFactory, LIGHT_TYPES } from "./Light/Light";
@@ -24,6 +25,7 @@ let pitch = 0.0;
 
 let animationFrame;
 let i = 0;
+let lastTime = 0;
 
 let cubes = [];
 const lights = [];
@@ -211,26 +213,34 @@ export const Engine = () => {
             // Créer plusieurs cubes comme dans le code C++
             cubes = [];
             for (let i = 0; i < 10; i++) {
-                const cube = new Cube(gl, programInfo);
+                const cube = new Cube(gl, skinnedProgramInfo);
                 cube.setCubeIndex(i);
                 cubes.push(cube);
             }
 
-            // Charger le modèle GLTF
-            gltfModel = new GltfModel(gl, programInfo);
+            // Charger le modèle GLTF avec le shader universel (skinned)
+            gltfModel = new GltfModel(gl, skinnedProgramInfo);
             try {
-                await gltfModel.load('/src/engine/models/Gltf/scene.gltf');
-                console.log('Modèle GLTF chargé avec succès!');
+                await gltfModel.load('/src/engine/models/test/low_poly_lion.gltf');
             } catch (error) {
                 console.error('Erreur lors du chargement du modèle GLTF:', error);
             }
 
             setupAdvancedLighting(gl, programInfo, cameraPosition, cameraFront);
+
+            // Configurer le lighting pour le shader skinned (universel)
+            gl.useProgram(skinnedProgramInfo.program);
+            if (skinnedProgramInfo.uniformLocations.viewPos !== -1) {
+                gl.uniform3fv(skinnedProgramInfo.uniformLocations.viewPos, cameraPosition);
+            }
+            if (skinnedProgramInfo.uniformLocations.materialShininess !== -1) {
+                gl.uniform1f(skinnedProgramInfo.uniformLocations.materialShininess, 1.0);
+            }
         }
 
         // Positions des cubes (équivalent de cubePositions)
         const cubePositions = [
-            [0.0, 0.0, 0.0],
+            [-1.0, 0.0, 0.0],
             [2.0, 5.0, -15.0],
             [-1.5, -2.2, -2.5],
             [-3.8, -2.0, -12.3],
@@ -268,7 +278,7 @@ export const Engine = () => {
             if (lights.length === 0) {
                 const directionalLight = new LightFactory(LIGHT_TYPES.DIRECTIONAL, gl, programInfo, { directionalLightProperties: {
                     direction: { x: -0.2, y: -1.0, z: -0.3},
-                    ambient: { x: 0.05, y: 0.05, z: 0.05},
+                    ambient: { x: 1, y: 0.05, z: 0.05},
                     diffuse: { x: 0.4, y: 0.4, z: 0.4},
                     specular: { x: 0.5, y: 0.5, z: 0.5},
                 }});
@@ -303,7 +313,11 @@ export const Engine = () => {
             }
         }
 
-        function drawScene(a) {
+        function drawScene(currentTime) {
+            // Calculer le deltaTime en secondes
+            const deltaTime = lastTime > 0 ? (currentTime - lastTime) / 1000.0 : 0;
+            lastTime = currentTime;
+
             gl.enable(gl.DEPTH_TEST);
             gl.clearColor(0.1, 0.1, 0.1, 1.0); // Couleur de fond comme dans le code C++
             gl.clearDepth(1.0); // tout effacer
@@ -311,19 +325,31 @@ export const Engine = () => {
             // Effacer le canvas avant que nous ne commencions à dessiner dessus.
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-            // Dessiner les cubes avec le shader principal
-            gl.useProgram(programInfo.program);
-            lights.forEach((light) => {
-                light.update(gl, programInfo, cameraPosition, cameraFront);
-            });
-            // cubes.forEach((cube, index) => {
-            //     cube.draw(gl, programInfo, viewMatrix, projectionMatrix, cubePositions[index]);
+            // Mettre à jour les animations du modèle GLTF
+            if (gltfModel && gltfModel.isLoaded) {
+                gltfModel.update(deltaTime);
+            }
+
+            // Mettre à jour les lights pour le shader principal
+            // gl.useProgram(programInfo.program);
+            // lights.forEach((light) => {
+            //     light.update(gl, programInfo, cameraPosition, cameraFront);
             // });
+
+            // Mettre à jour les lights pour le shader skinned
+            gl.useProgram(skinnedProgramInfo.program);
+            lights.forEach((light) => {
+                light.update(gl, skinnedProgramInfo, cameraPosition, cameraFront);
+            });
+
+            cubes.forEach((cube, index) => {
+                cube.draw(gl, skinnedProgramInfo, viewMatrix, projectionMatrix, cubePositions[index]);
+            });
 
             // Dessiner le modèle GLTF
             if (gltfModel && gltfModel.isLoaded) {
-                const rotation = a * 0.01; // Rotation progressive
-                gltfModel.draw(gl, programInfo, viewMatrix, projectionMatrix, [0, 0, -5], [2, 2, 2], rotation);
+                const rotation = 0; // Pas de rotation manuelle si on utilise les animations
+                gltfModel.draw(gl, skinnedProgramInfo, viewMatrix, projectionMatrix, [0, 0, -5], [2,2,2], rotation);
             }
 
             // gl.useProgram(lightCubeProgramInfo.program);
@@ -336,6 +362,13 @@ export const Engine = () => {
         const shaderProgram = initShaderProgram(gl, vsSource, fsSource);
         if (!shaderProgram) {
             console.error("Failed to create shader program");
+            return;
+        }
+
+        // Créer le shader pour les modèles avec skinning
+        const skinnedShaderProgram = initShaderProgram(gl, skinnedVsSource, fsSource);
+        if (!skinnedShaderProgram) {
+            console.error("Failed to create skinned shader program");
             return;
         }
 
@@ -412,6 +445,76 @@ export const Engine = () => {
             },
         };
 
+        // Program info pour les modèles avec skinning
+        const skinnedProgramInfo = {
+            program: skinnedShaderProgram,
+            attribLocations: {
+                vertexPosition: gl.getAttribLocation(skinnedShaderProgram, "aPos"),
+                vertexNormal: gl.getAttribLocation(skinnedShaderProgram, "aNormal"),
+                vertexTexCoord: gl.getAttribLocation(skinnedShaderProgram, "aTexCoords"),
+                vertexJoints: gl.getAttribLocation(skinnedShaderProgram, "aJoints"),
+                vertexWeights: gl.getAttribLocation(skinnedShaderProgram, "aWeights"),
+            },
+            uniformLocations: {
+                modelMatrix: gl.getUniformLocation(skinnedShaderProgram, "modelMatrix"),
+                viewMatrix: gl.getUniformLocation(skinnedShaderProgram, "viewMatrix"),
+                projectionMatrix: gl.getUniformLocation(skinnedShaderProgram, "projectionMatrix"),
+                // Material
+                materialShininess: gl.getUniformLocation(skinnedShaderProgram, "material.shininess"),
+                // View position
+                viewPos: gl.getUniformLocation(skinnedShaderProgram, "viewPos"),
+                // Directional light
+                dirLightDirection: gl.getUniformLocation(skinnedShaderProgram, "dirLight.direction"),
+                dirLightAmbient: gl.getUniformLocation(skinnedShaderProgram, "dirLight.ambient"),
+                dirLightDiffuse: gl.getUniformLocation(skinnedShaderProgram, "dirLight.diffuse"),
+                dirLightSpecular: gl.getUniformLocation(skinnedShaderProgram, "dirLight.specular"),
+                // Point lights
+                numPointLights: gl.getUniformLocation(skinnedShaderProgram, "numPointLights"),
+                pointLights0Position: gl.getUniformLocation(skinnedShaderProgram, "pointLights[0].position"),
+                pointLights0Ambient: gl.getUniformLocation(skinnedShaderProgram, "pointLights[0].ambient"),
+                pointLights0Diffuse: gl.getUniformLocation(skinnedShaderProgram, "pointLights[0].diffuse"),
+                pointLights0Specular: gl.getUniformLocation(skinnedShaderProgram, "pointLights[0].specular"),
+                pointLights0Constant: gl.getUniformLocation(skinnedShaderProgram, "pointLights[0].constant"),
+                pointLights0Linear: gl.getUniformLocation(skinnedShaderProgram, "pointLights[0].linear"),
+                pointLights0Quadratic: gl.getUniformLocation(skinnedShaderProgram, "pointLights[0].quadratic"),
+                pointLights1Position: gl.getUniformLocation(skinnedShaderProgram, "pointLights[1].position"),
+                pointLights1Ambient: gl.getUniformLocation(skinnedShaderProgram, "pointLights[1].ambient"),
+                pointLights1Diffuse: gl.getUniformLocation(skinnedShaderProgram, "pointLights[1].diffuse"),
+                pointLights1Specular: gl.getUniformLocation(skinnedShaderProgram, "pointLights[1].specular"),
+                pointLights1Constant: gl.getUniformLocation(skinnedShaderProgram, "pointLights[1].constant"),
+                pointLights1Linear: gl.getUniformLocation(skinnedShaderProgram, "pointLights[1].linear"),
+                pointLights1Quadratic: gl.getUniformLocation(skinnedShaderProgram, "pointLights[1].quadratic"),
+                pointLights2Position: gl.getUniformLocation(skinnedShaderProgram, "pointLights[2].position"),
+                pointLights2Ambient: gl.getUniformLocation(skinnedShaderProgram, "pointLights[2].ambient"),
+                pointLights2Diffuse: gl.getUniformLocation(skinnedShaderProgram, "pointLights[2].diffuse"),
+                pointLights2Specular: gl.getUniformLocation(skinnedShaderProgram, "pointLights[2].specular"),
+                pointLights2Constant: gl.getUniformLocation(skinnedShaderProgram, "pointLights[2].constant"),
+                pointLights2Linear: gl.getUniformLocation(skinnedShaderProgram, "pointLights[2].linear"),
+                pointLights2Quadratic: gl.getUniformLocation(skinnedShaderProgram, "pointLights[2].quadratic"),
+                pointLights3Position: gl.getUniformLocation(skinnedShaderProgram, "pointLights[3].position"),
+                pointLights3Ambient: gl.getUniformLocation(skinnedShaderProgram, "pointLights[3].ambient"),
+                pointLights3Diffuse: gl.getUniformLocation(skinnedShaderProgram, "pointLights[3].diffuse"),
+                pointLights3Specular: gl.getUniformLocation(skinnedShaderProgram, "pointLights[3].specular"),
+                pointLights3Constant: gl.getUniformLocation(skinnedShaderProgram, "pointLights[3].constant"),
+                pointLights3Linear: gl.getUniformLocation(skinnedShaderProgram, "pointLights[3].linear"),
+                pointLights3Quadratic: gl.getUniformLocation(skinnedShaderProgram, "pointLights[3].quadratic"),
+                // Spot light
+                spotLightPosition: gl.getUniformLocation(skinnedShaderProgram, "spotLight.position"),
+                spotLightDirection: gl.getUniformLocation(skinnedShaderProgram, "spotLight.direction"),
+                spotLightAmbient: gl.getUniformLocation(skinnedShaderProgram, "spotLight.ambient"),
+                spotLightDiffuse: gl.getUniformLocation(skinnedShaderProgram, "spotLight.diffuse"),
+                spotLightSpecular: gl.getUniformLocation(skinnedShaderProgram, "spotLight.specular"),
+                spotLightConstant: gl.getUniformLocation(skinnedShaderProgram, "spotLight.constant"),
+                spotLightLinear: gl.getUniformLocation(skinnedShaderProgram, "spotLight.linear"),
+                spotLightQuadratic: gl.getUniformLocation(skinnedShaderProgram, "spotLight.quadratic"),
+                spotLightCutOff: gl.getUniformLocation(skinnedShaderProgram, "spotLight.cutOff"),
+                spotLightOuterCutOff: gl.getUniformLocation(skinnedShaderProgram, "spotLight.outerCutOff"),
+                // Skinning uniforms
+                jointMatrices: gl.getUniformLocation(skinnedShaderProgram, "uJointMatrices"),
+                hasSkin: gl.getUniformLocation(skinnedShaderProgram, "uHasSkin"),
+            },
+        };
+
         // Program info pour les cubes de lumière
         const lightCubeProgramInfo = {
             program: lightCubeShaderProgram,
@@ -438,13 +541,13 @@ export const Engine = () => {
         document.addEventListener('mousemove', handleMouseMove);
         initScene();
 
-        const draw = () => {
-            drawScene(i);
+        const draw = (currentTime) => {
+            drawScene(currentTime);
             i++;
             animationFrame = requestAnimationFrame(draw);
         }
 
-        draw();
+        draw(0);
 
         return () => {
             if (animationFrame) {
