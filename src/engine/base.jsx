@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { mat4, vec3 } from "gl-matrix";
-import { Cube } from "./models/Cube";
+//import { Cube } from "./models/Cube";
 import { LightCube } from "./models/LightCube";
 import { GltfModel } from "./models/GltfModel";
 
@@ -27,13 +27,13 @@ let animationFrame;
 let i = 0;
 let lastTime = 0;
 
-let cubes = [];
 const lights = [];
 let gltfModel = null;
 
 export const Engine = () => {
     const canvasRef = useRef(null);
     const [position, setPosition] = useState({ x: 0, y: 0, z: -0.5 });
+    const [animation, setAnimation] = useState(0);
 
     useEffect(() => {
         if (!canvasRef.current) return;
@@ -208,20 +208,12 @@ export const Engine = () => {
 
             gl.useProgram(shaderProgram);
             gl.uniformMatrix4fv(programInfo.uniformLocations.viewMatrix, false, viewMatrix);
-            gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
-
-            // Créer plusieurs cubes comme dans le code C++
-            cubes = [];
-            for (let i = 0; i < 10; i++) {
-                const cube = new Cube(gl, skinnedProgramInfo);
-                cube.setCubeIndex(i);
-                cubes.push(cube);
-            }
+            gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);   
 
             // Charger le modèle GLTF avec le shader universel (skinned)
             gltfModel = new GltfModel(gl, skinnedProgramInfo);
             try {
-                await gltfModel.load('/src/engine/models/test/low_poly_lion.gltf');
+                await gltfModel.load('/src/engine/models/cube.gltf');
             } catch (error) {
                 console.error('Erreur lors du chargement du modèle GLTF:', error);
             }
@@ -278,7 +270,7 @@ export const Engine = () => {
             if (lights.length === 0) {
                 const directionalLight = new LightFactory(LIGHT_TYPES.DIRECTIONAL, gl, programInfo, { directionalLightProperties: {
                     direction: { x: -0.2, y: -1.0, z: -0.3},
-                    ambient: { x: 1, y: 0.05, z: 0.05},
+                    ambient: { x: 0.05, y: 0.05, z: 0.05},
                     diffuse: { x: 0.4, y: 0.4, z: 0.4},
                     specular: { x: 0.5, y: 0.5, z: 0.5},
                 }});
@@ -328,6 +320,12 @@ export const Engine = () => {
             // Mettre à jour les animations du modèle GLTF
             if (gltfModel && gltfModel.isLoaded) {
                 gltfModel.update(deltaTime);
+
+
+                // const currentIndex = gltfModel.animator.animations.findIndex(anim => anim.name === gltfModel.animator.currentAnimation.name);
+                // if (currentIndex !== animation) {
+                //    gltfModel.animator.play(animation);
+                // }
             }
 
             // Mettre à jour les lights pour le shader principal
@@ -342,14 +340,14 @@ export const Engine = () => {
                 light.update(gl, skinnedProgramInfo, cameraPosition, cameraFront);
             });
 
-            cubes.forEach((cube, index) => {
-                cube.draw(gl, skinnedProgramInfo, viewMatrix, projectionMatrix, cubePositions[index]);
-            });
+            // cubes.forEach((cube, index) => {
+            //     cube.draw(gl, skinnedProgramInfo, viewMatrix, projectionMatrix, cubePositions[index]);
+            // });
 
             // Dessiner le modèle GLTF
             if (gltfModel && gltfModel.isLoaded) {
-                const rotation = 0; // Pas de rotation manuelle si on utilise les animations
-                gltfModel.draw(gl, skinnedProgramInfo, viewMatrix, projectionMatrix, [0, 0, -5], [2,2,2], rotation);
+                const rotation = i * 0.0005; // Pas de rotation manuelle si on utilise les animations
+                gltfModel.draw(gl, skinnedProgramInfo, viewMatrix, projectionMatrix, [0, 0, -5], [1, 1, 1], rotation);
             }
 
             // gl.useProgram(lightCubeProgramInfo.program);
@@ -558,13 +556,17 @@ export const Engine = () => {
             document.removeEventListener('mousemove', handleMouseMove);
         }
         
-    }, [position]);
+    }, [position, animation]);
 
     const handleSliderChange = (axis, value) => {
         setPosition(prev => ({
             ...prev,
             [axis]: parseFloat(value)
         }));
+    };
+
+    const handleButtonClick = () => {
+       setAnimation((prev) => (prev === 4 ? 0 : prev + 1));
     };
 
     return (
@@ -612,6 +614,22 @@ export const Engine = () => {
                     <span style={{ color: 'white', minWidth: '40px' }}>{position.z.toFixed(1)}</span>
                 </div>
             </div>
+            
+            <button 
+                onClick={handleButtonClick}
+                style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: 'bold'
+                }}
+            >
+                Console Log
+            </button>
             
             <canvas ref={canvasRef} id="glCanvas" width="640" height="480"></canvas>
         </div>

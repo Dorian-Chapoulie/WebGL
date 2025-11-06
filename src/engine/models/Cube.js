@@ -1,4 +1,4 @@
-import { mat4 } from "gl-matrix";
+/*import { mat4 } from "gl-matrix";
 import diffuse from "../../assets/diffuse.png";
 import specular from "../../assets/specular.png";
 
@@ -199,4 +199,4 @@ export class Cube {
     }
        
 
-}
+}*/

@@ -1,6 +1,4 @@
 import { mat4 } from "gl-matrix";
-import diffuse from "../../assets/diffuse.png";
-import specular from "../../assets/specular.png";
 import { LightCube } from "../models/LightCube";
 
 //Only one directional and spot light allowed, multiple point lights
