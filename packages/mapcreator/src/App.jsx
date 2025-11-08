@@ -64,6 +64,10 @@ function App() {
     console.log('Import clicked');
   };
 
+  const handleTest = () => {
+    engine.scene.gltfModel.animator.play(1)
+  }
+
   const updateValue = (type, axis, value) => {
     const numValue = parseFloat(value);
     if (type === 'scale') {
@@ -199,9 +203,14 @@ function App() {
       </div>
 
       <div className="models-gallery">
-        <button className="import-btn" onClick={handleImport}>
-          Importer
-        </button>
+        <div className="buttons-container">
+          <button className="import-btn" onClick={handleImport}>
+            Importer
+          </button>
+          <button className="import-btn" onClick={handleTest}>
+            Test
+          </button>
+        </div>
         <div className="models-list">
           {models.map((model, index) => (
             <div key={index} className="model-item">

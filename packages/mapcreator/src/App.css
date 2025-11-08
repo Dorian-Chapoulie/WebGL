@@ -122,6 +122,12 @@ body {
   flex-direction: column;
 }
 
+.buttons-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
 .import-btn {
   background-color: #646cff;
   color: white;
@@ -130,8 +136,6 @@ body {
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9em;
-  margin-bottom: 10px;
-  align-self: flex-start;
   transition: background-color 0.3s;
 }
 
