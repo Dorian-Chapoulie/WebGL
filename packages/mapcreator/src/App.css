@@ -1,42 +1,322 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+* {
+  box-sizing: border-box;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+body {
+  margin: 0;
+  padding: 0;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.main-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  flex-direction: row;
+  min-height: 0;
 }
 
-.card {
-  padding: 2em;
+.canvas-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
 }
 
-.read-the-docs {
+#glCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.controls-panel {
+  width: 300px;
+  min-width: 250px;
+  max-width: 350px;
+  flex-shrink: 0;
+  background-color: #1a1a1a;
+  padding: 20px;
+  overflow-y: auto;
+  border-left: 1px solid #333;
+}
+
+.controls-panel h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #fff;
+  font-size: 1.2em;
+}
+
+.control-section {
+  margin-bottom: 30px;
+}
+
+.control-section h4 {
   color: #888;
+  font-size: 0.9em;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.control-group {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.control-group label {
+  color: #fff;
+  font-size: 0.85em;
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+.control-group input[type="range"] {
+  flex: 1;
+  height: 4px;
+  background: #333;
+  outline: none;
+  border-radius: 2px;
+}
+
+.control-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #646cff;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.control-group input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #646cff;
+  cursor: pointer;
+  border-radius: 50%;
+  border: none;
+}
+
+.models-gallery {
+  width: 100%;
+  height: 150px;
+  background-color: #1a1a1a;
+  border-top: 1px solid #333;
+  padding: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.import-btn {
+  background-color: #646cff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  margin-bottom: 10px;
+  align-self: flex-start;
+  transition: background-color 0.3s;
+}
+
+.import-btn:hover {
+  background-color: #535bf2;
+}
+
+.models-list {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.model-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 10px;
+  background-color: #242424;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  min-width: 80px;
+}
+
+.model-item:hover {
+  background-color: #2a2a2a;
+}
+
+.model-icon {
+  font-size: 2em;
+}
+
+.model-name {
+  color: #fff;
+  font-size: 0.75em;
+  text-align: center;
+  word-break: break-word;
+}
+
+/* Responsive styles */
+@media (max-width: 1024px) {
+  .controls-panel {
+    width: 250px;
+    min-width: 200px;
+    padding: 15px;
+  }
+
+  .controls-panel h3 {
+    font-size: 1em;
+  }
+
+  .control-section h4 {
+    font-size: 0.8em;
+  }
+
+  .control-group label {
+    font-size: 0.75em;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+  }
+
+  .controls-panel {
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+    height: 200px;
+    border-left: none;
+    border-top: 1px solid #333;
+    padding: 10px;
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .controls-panel h3 {
+    display: none;
+  }
+
+  .control-section {
+    min-width: 150px;
+    margin-right: 20px;
+    margin-bottom: 0;
+  }
+
+  .control-section h4 {
+    font-size: 0.75em;
+    margin-bottom: 5px;
+  }
+
+  .control-group {
+    margin-bottom: 8px;
+  }
+
+  .control-group label {
+    font-size: 0.7em;
+  }
+
+  .models-gallery {
+    height: 120px;
+  }
+
+  .model-item {
+    min-width: 60px;
+    padding: 8px;
+  }
+
+  .model-icon {
+    font-size: 1.5em;
+  }
+
+  .model-name {
+    font-size: 0.7em;
+  }
+
+  .import-btn {
+    padding: 6px 12px;
+    font-size: 0.85em;
+  }
+}
+
+@media (max-width: 480px) {
+  .controls-panel {
+    height: 150px;
+    padding: 8px;
+  }
+
+  .control-section {
+    min-width: 120px;
+    margin-right: 15px;
+  }
+
+  .control-section h4 {
+    font-size: 0.7em;
+  }
+
+  .control-group {
+    margin-bottom: 5px;
+  }
+
+  .control-group label {
+    font-size: 0.65em;
+  }
+
+  .control-group input[type="range"] {
+    height: 3px;
+  }
+
+  .control-group input[type="range"]::-webkit-slider-thumb {
+    width: 12px;
+    height: 12px;
+  }
+
+  .control-group input[type="range"]::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+  }
+
+  .models-gallery {
+    height: 100px;
+    padding: 8px;
+  }
+
+  .model-item {
+    min-width: 50px;
+    padding: 5px;
+  }
+
+  .model-icon {
+    font-size: 1.2em;
+  }
+
+  .model-name {
+    font-size: 0.65em;
+  }
+
+  .import-btn {
+    padding: 5px 10px;
+    font-size: 0.8em;
+    margin-bottom: 8px;
+  }
 }
