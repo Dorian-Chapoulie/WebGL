@@ -278,6 +278,7 @@ export class GltfModel {
         }
     }
 
+    //refactor baseModelMatrix en this.modelMatrix
     draw(gl, programInfo, viewMatrix, projectionMatrix, position = [0, 0, 0], scale = [1, 1, 1], rotation = 0) {
         if (!this.isLoaded) {
             return;
@@ -371,7 +372,7 @@ export class GltfModel {
             gl.uniform1i(actualProgramInfo.uniformLocations.hasSkin, 1);
 
             // Flatten les matrices pour WebGL (maximum 825 joints)
-            const maxJoints = 825;
+            const maxJoints = 250;
             const jointCount = Math.min(this.jointMatrices[0].length, maxJoints);
             const flatMatrices = new Float32Array(maxJoints * 16);
 

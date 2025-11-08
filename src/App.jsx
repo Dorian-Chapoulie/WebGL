@@ -1,4 +1,4 @@
-import { Engine } from './engine/base'
+import { EngineTest } from './engine/base'
 
 function App() {
 
@@ -16,7 +16,7 @@ function App() {
       }}>
         3D Cube Position Controller
       </h1>
-      <Engine />
+      <EngineTest />
     </div>
   )
 }

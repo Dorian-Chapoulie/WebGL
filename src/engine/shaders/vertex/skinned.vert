@@ -14,8 +14,8 @@ uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 projectionMatrix;
 
-// Matrices des joints (maximum 825 joints)
-uniform mat4 uJointMatrices[825];
+// Matrices des joints (maximum 250 joints)
+uniform mat4 uJointMatrices[250];
 uniform bool uHasSkin;
 
 void main()
