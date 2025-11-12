@@ -46,6 +46,11 @@ function App() {
     };
 
     requestAnimationFrame(render);
+
+    if (engine.scene.models.length === 0) {
+      engine.scene.addNewModel('/models/women/Untitled.gltf', { x: 0, y: 0, z: -5 }, { x: 0.1, y: 0.1, z: 0.1 });
+    }
+
     setSelectedEntity(engine.scene.models[0]); //TEST
 
     return () => {
