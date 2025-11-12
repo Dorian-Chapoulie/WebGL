@@ -14,34 +14,6 @@ import { useEntitySelector } from '../EntitySelectorProvider/EntitySelectorProvi
 
 import './Workspace.scss';
 
-const Models = [
-  { type: 'Cube', modelPath: '/models/Cube.gltf' },
-  { type: 'Scene', modelPath: '/models/Gltf/scene.gltf' },
-  { type: 'Untitled', modelPath: '/models/Untitled.gltf' },
-  { type: 'Lion', modelPath: '/models/test/low_poly_lion.gltf' },
-  { type: 'Women', modelPath: '/models/women/Untitled.gltf' },
-  { type: 'Cube', modelPath: '/models/Cube.gltf' },
-  { type: 'Scene', modelPath: '/models/Gltf/scene.gltf' },
-  { type: 'Untitled', modelPath: '/models/Untitled.gltf' },
-  { type: 'Lion', modelPath: '/models/test/low_poly_lion.gltf' },
-  { type: 'Women', modelPath: '/models/women/Untitled.gltf' },
-  { type: 'Cube', modelPath: '/models/Cube.gltf' },
-  { type: 'Scene', modelPath: '/models/Gltf/scene.gltf' },
-  { type: 'Untitled', modelPath: '/models/Untitled.gltf' },
-  { type: 'Lion', modelPath: '/models/test/low_poly_lion.gltf' },
-  { type: 'Women', modelPath: '/models/women/Untitled.gltf' },
-  { type: 'Cube', modelPath: '/models/Cube.gltf' },
-  { type: 'Scene', modelPath: '/models/Gltf/scene.gltf' },
-  { type: 'Untitled', modelPath: '/models/Untitled.gltf' },
-  { type: 'Lion', modelPath: '/models/test/low_poly_lion.gltf' },
-  { type: 'Women', modelPath: '/models/women/Untitled.gltf' },
-  { type: 'Cube', modelPath: '/models/Cube.gltf' },
-  { type: 'Scene', modelPath: '/models/Gltf/scene.gltf' },
-  { type: 'Untitled', modelPath: '/models/Untitled.gltf' },
-  { type: 'Lion', modelPath: '/models/test/low_poly_lion.gltf' },
-  { type: 'Women', modelPath: '/models/women/Untitled.gltf' },
-];
-
 const Lights = [
   //{ type: LIGHT_TYPES.DIRECTIONAL, desc: 'Directional Light' },
   { type: LIGHT_TYPES.POINT_LIGHT, desc: 'Point Light' },
@@ -54,7 +26,27 @@ const WORKSPACE_TAB = {
   HIERARCHY: 'Hierarchy',
 }
 
-const WorkspaceModels = ({ models }) => {
+const WorkspaceModels = () => {
+  const [models, setModels] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/models-list.json')
+      .then(response => response.json())
+      .then(data => {
+        setModels(data);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Erreur lors du chargement des modèles:', error);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return <div className='p-3'>Chargement des modèles...</div>;
+  }
+
   return (
     <div className='Workspace_models-grid'>
       {models.map((model, index) => (
@@ -85,25 +77,28 @@ const WorkspaceLights = ({ lights }) => {
 }
 
 const WorkspaceHierarchy = ({ engine }) => {
-  const { setSelectedEntity, setSelectedEntityOptions } = useEntitySelector();
+  const { setSelectedEntity } = useEntitySelector();
+  const [deleteEntity, setDeleteEntity] = useState(null);
 
   const sceneHierarchy = useMemo(() => {
-    console.debug('Engine state in useMemo:', engine?.scene);
     if (!engine) return { lights: [], models: [] };
     const lights = engine.scene.lights;
     const models = engine.scene.models;
     return { lights, models };
-  }, [engine]);
+  }, [engine, deleteEntity]);
 
   const handleClickItem = (entity) => {
-    setSelectedEntity(entity);
+    //setSelectedEntity(entity);
 
     const newOptions = {};
     Object.keys(entity.getParams()).map((key) => {
       const value = entity[key];
       newOptions[key] = value;
     });
-    setSelectedEntityOptions(newOptions);
+    //setSelectedEntityOptions(newOptions);
+
+    engine.scene.deleteEntity(entity.id); // For testing purpose
+    setDeleteEntity(entity.id);
   }
   
   return (
@@ -151,7 +146,7 @@ export const Workspace = ({ engine }) => {
       </Nav>
       <TabContent activeTab={category} className='overflow-auto'>
         <TabPane tabId={WORKSPACE_TAB.MODELS}>
-          <WorkspaceModels models={Models} />
+          <WorkspaceModels />
         </TabPane>
         <TabPane tabId={WORKSPACE_TAB.LIGHTS}>
           <WorkspaceLights lights={Lights} />

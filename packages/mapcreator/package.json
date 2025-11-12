@@ -4,8 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "npm run generate-models && vite",
+    "build": "npm run generate-models && vite build",
+    "generate-models": "node scripts/generate-models-list.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },

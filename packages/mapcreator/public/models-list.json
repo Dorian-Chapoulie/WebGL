@@ -1,0 +1,14 @@
+[
+  {
+    "type": "Gltf",
+    "modelPath": "/models/Gltf/scene.gltf"
+  },
+  {
+    "type": "test",
+    "modelPath": "/models/test/low_poly_lion.gltf"
+  },
+  {
+    "type": "women",
+    "modelPath": "/models/women/Untitled.gltf"
+  }
+]
