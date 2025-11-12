@@ -1,21 +1,31 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Engine } from '../../../lib/Engine/Engine.js'
 import { Workspace } from './Components/Library/Workspace.jsx';
 import { EntityOptions } from './Components/EntityOptions/EntityOptions.jsx';
 import { useEntitySelector } from './Components/EntitySelectorProvider/EntitySelectorProvider.jsx';
+import { LightFactory } from '../../../lib/Engine/Light/Light.js';
 
 import './App.css'  
 
-let engine = null;
-
 function App() {
   const { setSelectedEntity } = useEntitySelector();
-  useEffect(() => {
-    const canvas = document.getElementById("glCanvas");
+  const [engine, setEngine] =  useState(null);
 
+  useEffect(() => {
     if (!engine) {
-      engine = new Engine("glCanvas");
+      LightFactory.pointLightCount = 0;
+      LightFactory.spotLightCount = 0;
+      LightFactory.directionalLightCount = 0;
+      setEngine(new Engine("glCanvas"));
     }
+  }, [engine]);
+
+  // Setup canvas resize and render loop when engine is ready
+  useEffect(() => {
+    if (!engine) return;
+
+    const canvas = document.getElementById("glCanvas");
+    if (!canvas) return;
 
     const resizeCanvas = () => {
       const parent = canvas.parentElement;
@@ -24,7 +34,7 @@ function App() {
         canvas.height = parent.clientHeight;
 
         // Update WebGL viewport and projection matrix if engine has gl context
-        if (engine && engine.gl) {
+        if (engine.gl) {
           engine.gl.viewport(0, 0, canvas.width, canvas.height);
           engine.updateProjectionMatrix();
         }
@@ -40,24 +50,28 @@ function App() {
       resizeObserver.observe(canvas.parentElement);
     }
 
+    // Animation loop
+    let animationFrameId;
     const render = (currentTime) => {
       engine.drawScene(currentTime);
-      requestAnimationFrame(render);
+      animationFrameId = requestAnimationFrame(render);
     };
 
-    requestAnimationFrame(render);
+    animationFrameId = requestAnimationFrame(render);
 
+    // Load initial model if needed
     if (engine.scene.models.length === 0) {
       engine.scene.addNewModel('/models/women/Untitled.gltf', { x: 0, y: 0, z: -5 }, { x: 0.1, y: 0.1, z: 0.1 });
+      setEngine((prevState) => { return { ...prevState, test: true }; }); // Trigger re-render
     }
-
-    setSelectedEntity(engine.scene.models[0]); //TEST
 
     return () => {
-      cancelAnimationFrame(render);
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
       resizeObserver.disconnect();
-    }
-  }, []);
+    };
+  }, [engine, setSelectedEntity]);
 
   return (
     <div className="app-container">
@@ -67,7 +81,7 @@ function App() {
         </div>
         <EntityOptions />
       </div>
-      <Workspace />   
+      <Workspace engine={engine} />   
     </div>
   )
 }

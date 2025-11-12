@@ -1,53 +1,51 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Nav,
   NavItem,
   NavLink,
   TabContent,
   TabPane, 
-  Row,
-  Col,
   Card,
   CardTitle,
-  CardText,
-  Button,
 } from 'reactstrap';
 import { LIGHT_TYPES } from '../../../../../lib/Engine/Light/Light';
+import { useEntitySelector } from '../EntitySelectorProvider/EntitySelectorProvider';
+
 
 import './Workspace.scss';
 
-const models = [
-  { name: 'Cube', path: '/models/Cube.gltf' },
-  { name: 'Scene', path: '/models/Gltf/scene.gltf' },
-  { name: 'Untitled', path: '/models/Untitled.gltf' },
-  { name: 'Lion', path: '/models/test/low_poly_lion.gltf' },
-  { name: 'Women', path: '/models/women/Untitled.gltf' },
-  { name: 'Cube', path: '/models/Cube.gltf' },
-  { name: 'Scene', path: '/models/Gltf/scene.gltf' },
-  { name: 'Untitled', path: '/models/Untitled.gltf' },
-  { name: 'Lion', path: '/models/test/low_poly_lion.gltf' },
-  { name: 'Women', path: '/models/women/Untitled.gltf' },
-  { name: 'Cube', path: '/models/Cube.gltf' },
-  { name: 'Scene', path: '/models/Gltf/scene.gltf' },
-  { name: 'Untitled', path: '/models/Untitled.gltf' },
-  { name: 'Lion', path: '/models/test/low_poly_lion.gltf' },
-  { name: 'Women', path: '/models/women/Untitled.gltf' },
-  { name: 'Cube', path: '/models/Cube.gltf' },
-  { name: 'Scene', path: '/models/Gltf/scene.gltf' },
-  { name: 'Untitled', path: '/models/Untitled.gltf' },
-  { name: 'Lion', path: '/models/test/low_poly_lion.gltf' },
-  { name: 'Women', path: '/models/women/Untitled.gltf' },
-  { name: 'Cube', path: '/models/Cube.gltf' },
-  { name: 'Scene', path: '/models/Gltf/scene.gltf' },
-  { name: 'Untitled', path: '/models/Untitled.gltf' },
-  { name: 'Lion', path: '/models/test/low_poly_lion.gltf' },
-  { name: 'Women', path: '/models/women/Untitled.gltf' },
+const Models = [
+  { type: 'Cube', modelPath: '/models/Cube.gltf' },
+  { type: 'Scene', modelPath: '/models/Gltf/scene.gltf' },
+  { type: 'Untitled', modelPath: '/models/Untitled.gltf' },
+  { type: 'Lion', modelPath: '/models/test/low_poly_lion.gltf' },
+  { type: 'Women', modelPath: '/models/women/Untitled.gltf' },
+  { type: 'Cube', modelPath: '/models/Cube.gltf' },
+  { type: 'Scene', modelPath: '/models/Gltf/scene.gltf' },
+  { type: 'Untitled', modelPath: '/models/Untitled.gltf' },
+  { type: 'Lion', modelPath: '/models/test/low_poly_lion.gltf' },
+  { type: 'Women', modelPath: '/models/women/Untitled.gltf' },
+  { type: 'Cube', modelPath: '/models/Cube.gltf' },
+  { type: 'Scene', modelPath: '/models/Gltf/scene.gltf' },
+  { type: 'Untitled', modelPath: '/models/Untitled.gltf' },
+  { type: 'Lion', modelPath: '/models/test/low_poly_lion.gltf' },
+  { type: 'Women', modelPath: '/models/women/Untitled.gltf' },
+  { type: 'Cube', modelPath: '/models/Cube.gltf' },
+  { type: 'Scene', modelPath: '/models/Gltf/scene.gltf' },
+  { type: 'Untitled', modelPath: '/models/Untitled.gltf' },
+  { type: 'Lion', modelPath: '/models/test/low_poly_lion.gltf' },
+  { type: 'Women', modelPath: '/models/women/Untitled.gltf' },
+  { type: 'Cube', modelPath: '/models/Cube.gltf' },
+  { type: 'Scene', modelPath: '/models/Gltf/scene.gltf' },
+  { type: 'Untitled', modelPath: '/models/Untitled.gltf' },
+  { type: 'Lion', modelPath: '/models/test/low_poly_lion.gltf' },
+  { type: 'Women', modelPath: '/models/women/Untitled.gltf' },
 ];
 
 const Lights = [
-  //{ name: LIGHT_TYPES.DIRECTIONAL, desc: 'Directional Light' },
-  { name: LIGHT_TYPES.POINT_LIGHT, desc: 'Point Light' },
-  { name: LIGHT_TYPES.SPOT_LIGHT, desc: 'Spot Light' },
+  //{ type: LIGHT_TYPES.DIRECTIONAL, desc: 'Directional Light' },
+  { type: LIGHT_TYPES.POINT_LIGHT, desc: 'Point Light' },
+  { type: LIGHT_TYPES.SPOT_LIGHT, desc: 'Spot Light' },
 ];
 
 const WORKSPACE_TAB = {
@@ -56,28 +54,28 @@ const WORKSPACE_TAB = {
   HIERARCHY: 'Hierarchy',
 }
 
-const WorkspaceModels = () => {
+const WorkspaceModels = ({ models }) => {
   return (
     <div className='Workspace_models-grid'>
       {models.map((model, index) => (
         <Card key={index} className='Workspace_model-item p-2 jutify-content-center align-items-center'>
           <CardTitle>
-            {model.name}
+            {model.type}📦
           </CardTitle>
-          📦
+          {model.modelPath.split('/').pop()}
         </Card>
       ))}
     </div>
   )
 }
 
-const WorkspaceLights = () => {
+const WorkspaceLights = ({ lights }) => {
   return (
     <div className='Workspace_models-grid'>
-      {Lights.map((model, index) => (
+      {lights.map((light, index) => (
         <Card key={index} className='Workspace_model-item p-2 jutify-content-center align-items-center'>
           <CardTitle>
-            {model.desc}
+            {light.type}
           </CardTitle>
           💡
         </Card>
@@ -86,24 +84,52 @@ const WorkspaceLights = () => {
   )
 }
 
-const WorkspaceHierarchy = () => {
+const WorkspaceHierarchy = ({ engine }) => {
+  const { setSelectedEntity, setSelectedEntityOptions } = useEntitySelector();
+
+  const sceneHierarchy = useMemo(() => {
+    console.debug('Engine state in useMemo:', engine?.scene);
+    if (!engine) return { lights: [], models: [] };
+    const lights = engine.scene.lights;
+    const models = engine.scene.models;
+    return { lights, models };
+  }, [engine]);
+
+  const handleClickItem = (entity) => {
+    setSelectedEntity(entity);
+
+    const newOptions = {};
+    Object.keys(entity.getParams()).map((key) => {
+      const value = entity[key];
+      newOptions[key] = value;
+    });
+    setSelectedEntityOptions(newOptions);
+  }
+  
   return (
     <div className='Workspace_models-grid'>
-      {/* {Lights.map((model, index) => (
-        <Card key={index} className='Workspace_model-item p-2 jutify-content-center align-items-center'>
+      {sceneHierarchy.lights.map((light, index) => (
+        <Card onClick={() => handleClickItem(light)} key={index} className='Workspace_model-item p-2 jutify-content-center align-items-center'>
           <CardTitle>
-            {model.desc}
+            {light.type}
           </CardTitle>
           💡
         </Card>
-      ))} */}
+      ))}
+      {sceneHierarchy.models.map((model, index) => (
+        <Card onClick={() => handleClickItem(model)} key={index} className='Workspace_model-item p-2 jutify-content-center align-items-center'>
+          <CardTitle>
+            {model.type}📦
+          </CardTitle>
+          {model.modelPath.split('/').pop()}
+        </Card>
+      ))}
     </div>
   )
 }
 
-export const Workspace = ({ models, lights }) => {
+export const Workspace = ({ engine }) => {
   const [category, setCategory] = useState(WORKSPACE_TAB.MODELS);
-
   return (    
     <div className="Workspace">
       <Nav tabs className='border-0'>
@@ -125,13 +151,13 @@ export const Workspace = ({ models, lights }) => {
       </Nav>
       <TabContent activeTab={category} className='overflow-auto'>
         <TabPane tabId={WORKSPACE_TAB.MODELS}>
-          <WorkspaceModels />
+          <WorkspaceModels models={Models} />
         </TabPane>
         <TabPane tabId={WORKSPACE_TAB.LIGHTS}>
-          <WorkspaceLights />
+          <WorkspaceLights lights={Lights} />
         </TabPane>
         <TabPane tabId={WORKSPACE_TAB.HIERARCHY}>
-          <WorkspaceHierarchy models={models} lights={lights} />
+          <WorkspaceHierarchy engine={engine} />
         </TabPane>
       </TabContent>
     </div>

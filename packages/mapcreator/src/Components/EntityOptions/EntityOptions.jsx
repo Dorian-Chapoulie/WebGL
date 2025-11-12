@@ -112,25 +112,14 @@ FloatInput.propTypes = {
 
 
 export const EntityOptions = () => {
-  const { selectedEntity } = useEntitySelector();
-  const [options, setOptions] = useState(undefined);
+  const { selectedEntity, selectedEntityOptions, setSelectedEntityOptions } = useEntitySelector();
 
-  useEffect(() => {
-    if (selectedEntity && !options) {
-      const newOptions = {};
-  		Object.keys(selectedEntity.getParams()).map((key) => {
-        const value = selectedEntity[key];
-        newOptions[key] = value;
-      });
-      setOptions(newOptions);
-    }
-  }, [selectedEntity]);
     
   return (    
     <div className='EntityOptions overflow-auto'>   
       <h1>{selectedEntity?.subtype} - {selectedEntity?.type}</h1>
 
-      {options && selectedEntity && Object.keys(selectedEntity.getParams()).map((key) => {
+      {selectedEntityOptions && selectedEntity && Object.keys(selectedEntity.getParams()).map((key) => {
         const params = selectedEntity.getParams();
         const currentParam = params[key];
         switch(currentParam.type) {
@@ -139,11 +128,11 @@ export const EntityOptions = () => {
             <Vector3Input 
               key={key}
               label={key} 
-              value={options[key]} 
+              value={selectedEntityOptions[key]} 
               param={currentParam}
               onChange={(newValue) => {
                 selectedEntity[key] = newValue;
-                setOptions({ ...options, [key]: newValue });
+                setSelectedEntityOptions({ ...selectedEntityOptions, [key]: newValue });
               }} 
             />
           );
@@ -152,11 +141,11 @@ export const EntityOptions = () => {
             <FloatInput 
               key={key}
               label={key} 
-              value={options[key]} 
+              value={selectedEntityOptions[key]} 
               param={currentParam}
               onChange={(newValue) => {
                 selectedEntity[key] = newValue;
-                setOptions({ ...options, [key]: newValue });
+                setSelectedEntityOptions({ ...selectedEntityOptions, [key]: newValue });
               }} 
             />
           );

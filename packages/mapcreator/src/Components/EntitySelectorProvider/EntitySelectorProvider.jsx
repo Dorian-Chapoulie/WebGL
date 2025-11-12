@@ -5,9 +5,10 @@ const EntitySelectorContext = createContext();
 
 export const EntitySelectorProvider = ({ children }) => {
   const [selectedEntity, setSelectedEntity] = useState(null);
+  const [selectedEntityOptions, setSelectedEntityOptions] = useState(undefined);
 
   return (
-    <EntitySelectorContext.Provider value={{ selectedEntity, setSelectedEntity }}>
+    <EntitySelectorContext.Provider value={{ selectedEntity, setSelectedEntity, selectedEntityOptions, setSelectedEntityOptions }}>
       {children}
     </EntitySelectorContext.Provider>
   );
