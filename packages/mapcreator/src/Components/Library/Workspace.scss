@@ -1,0 +1,61 @@
+.Workspace {
+    background-color: #1a1a1a;
+    border-top: 1px solid #333;
+    height: 250px;
+    display: flex;
+    flex-direction: column;
+
+    .nav-tabs {
+        background-color: #1a1a1a;
+        padding: 0.5rem 1rem 0;
+
+        .nav-item {
+            .nav-link {
+                color: #888;
+                background-color: transparent;
+                border: none;
+                border-bottom: 2px solid transparent;
+                border-radius: 0;
+                padding: 0.5rem 1rem;
+                font-size: 0.9em;
+                font-weight: 500;
+                transition: all 0.3s ease;
+                cursor: pointer;
+
+                &:hover {
+                    color: #fff;
+                    background-color: rgba(100, 108, 255, 0.1);
+                    border-bottom-color: rgba(100, 108, 255, 0.3);
+                }
+
+                &.active {
+                    color: #fff;
+                    background-color: rgba(100, 108, 255, 0.15);
+                    border-bottom-color: #646cff;
+                }
+            }
+        }
+    }
+
+    .tab-content {
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    &_models-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    &_model-item {
+        width: 100%;
+        cursor: pointer;
+        transition: transform 0.2s;
+
+        &:hover {
+            transform: scale(1.05);
+        }
+    }
+}
