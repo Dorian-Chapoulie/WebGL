@@ -62,6 +62,7 @@ function App() {
     // Load initial model if needed
     if (engine.scene.models.length === 0) {
       engine.scene.addNewModel('/models/women/Untitled.gltf', { x: 0, y: 0, z: -5 }, { x: 0.1, y: 0.1, z: 0.1 });
+      engine.scene.addNewModel('/models/Gltf/scene.gltf', { x: 0, y: 0, z:1 }, { x: 1, y: 1, z: 1 });
       setEngine((prevState) => { return { ...prevState, test: true }; }); // Trigger re-render
     }
 
@@ -79,7 +80,7 @@ function App() {
         <div className="canvas-container">
           <canvas id="glCanvas"></canvas>
         </div>
-        <EntityOptions />
+        <EntityOptions engine={engine} />
       </div>
       <Workspace engine={engine} />   
     </div>

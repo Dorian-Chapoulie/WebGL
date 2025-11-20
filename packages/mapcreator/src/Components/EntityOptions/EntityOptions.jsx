@@ -1,12 +1,23 @@
 import PropTypes from 'prop-types';
-import { useEffect, useState } from 'react'
+import { useState } from 'react';
+import { Button } from 'reactstrap';
 import { useEntitySelector } from '../EntitySelectorProvider/EntitySelectorProvider';
 
 import './EntityOptions.scss';
 
 const Vector3Input = ({ label, value, onChange, param }) => {
+  const [isRatioEnabled, setIsRatioEnabled] = useState(param.ratio || false);
 	
   const handleChange = (axis, newValue) => {
+    if (isRatioEnabled) {
+      const updatedValue = {
+        x: parseFloat(newValue) || 0,
+        y: parseFloat(newValue) || 0,
+        z: parseFloat(newValue) || 0,
+      };
+      onChange(updatedValue);
+      return;
+    }
     const updatedValue = { ...value, [axis]: parseFloat(newValue) || 0 };
     onChange(updatedValue);
   };
@@ -57,6 +68,16 @@ const Vector3Input = ({ label, value, onChange, param }) => {
           />
           <span className="value">{value.z.toFixed(2)}</span>
         </div>
+        {param.ratio && (
+          <div className="slider-group">
+            <label>Ratio</label>
+            <input
+              type="checkbox"
+              checked={isRatioEnabled}
+              onChange={(e) => setIsRatioEnabled(e.target.checked)}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -111,14 +132,20 @@ FloatInput.propTypes = {
 
 
 
-export const EntityOptions = () => {
-  const { selectedEntity, selectedEntityOptions, setSelectedEntityOptions } = useEntitySelector();
+export const EntityOptions = ({ engine }) => {
+  const { selectedEntity, setSelectedEntity, selectedEntityOptions, setSelectedEntityOptions } = useEntitySelector();
 
+  const handleDelete = () => {
+    if (selectedEntity) {
+      engine.scene.deleteEntity(selectedEntity.id);
+      setSelectedEntityOptions(null);
+      setSelectedEntity(null);
+    }
+  };
     
   return (    
     <div className='EntityOptions overflow-auto'>   
       <h1>{selectedEntity?.subtype} - {selectedEntity?.type}</h1>
-
       {selectedEntityOptions && selectedEntity && Object.keys(selectedEntity.getParams()).map((key) => {
         const params = selectedEntity.getParams();
         const currentParam = params[key];
@@ -153,6 +180,11 @@ export const EntityOptions = () => {
           return null;
         }
       })}
+      {selectedEntityOptions && selectedEntity && (
+        <Button color="danger" onClick={handleDelete} className="mt-3">
+          Delete
+        </Button>
+      )}
     </div>
   )
 }

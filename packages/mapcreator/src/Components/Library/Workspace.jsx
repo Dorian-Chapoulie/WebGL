@@ -77,34 +77,32 @@ const WorkspaceLights = ({ lights }) => {
 }
 
 const WorkspaceHierarchy = ({ engine }) => {
-  const { setSelectedEntity } = useEntitySelector();
-  const [deleteEntity, setDeleteEntity] = useState(null);
+  const { setSelectedEntity, setSelectedEntityOptions, selectedEntity } = useEntitySelector();
 
   const sceneHierarchy = useMemo(() => {
     if (!engine) return { lights: [], models: [] };
     const lights = engine.scene.lights;
     const models = engine.scene.models;
     return { lights, models };
-  }, [engine, deleteEntity]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engine, selectedEntity]);
+  //hack to refresh the value since engine.scene.lights/models are not reactive
 
   const handleClickItem = (entity) => {
-    //setSelectedEntity(entity);
+    setSelectedEntity(entity);
 
     const newOptions = {};
     Object.keys(entity.getParams()).map((key) => {
       const value = entity[key];
       newOptions[key] = value;
     });
-    //setSelectedEntityOptions(newOptions);
-
-    engine.scene.deleteEntity(entity.id); // For testing purpose
-    setDeleteEntity(entity.id);
+    setSelectedEntityOptions(newOptions);
   }
-  
+
   return (
     <div className='Workspace_models-grid'>
       {sceneHierarchy.lights.map((light, index) => (
-        <Card onClick={() => handleClickItem(light)} key={index} className='Workspace_model-item p-2 jutify-content-center align-items-center'>
+        <Card style={{ border: selectedEntity?.id === light.id ? '3px solid #646cff' : 'none' }} onClick={() => handleClickItem(light)} key={index} className='Workspace_model-item p-2 jutify-content-center align-items-center'>
           <CardTitle>
             {light.type}
           </CardTitle>
@@ -112,7 +110,7 @@ const WorkspaceHierarchy = ({ engine }) => {
         </Card>
       ))}
       {sceneHierarchy.models.map((model, index) => (
-        <Card onClick={() => handleClickItem(model)} key={index} className='Workspace_model-item p-2 jutify-content-center align-items-center'>
+        <Card style={{ border: selectedEntity?.id === model.id ? '3px solid #646cff' : 'none' }} onClick={() => handleClickItem(model)} key={index} className='Workspace_model-item p-2 jutify-content-center align-items-center'>
           <CardTitle>
             {model.type}📦
           </CardTitle>
