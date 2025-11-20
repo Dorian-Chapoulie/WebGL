@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Engine } from '../../../lib/Engine/Engine.js'
+import { Engine, defaultSceneData } from '../../../lib/Engine/Engine.js'
 import { Workspace } from './Components/Library/Workspace.jsx';
 import { EntityOptions } from './Components/EntityOptions/EntityOptions.jsx';
 import { useEntitySelector } from './Components/EntitySelectorProvider/EntitySelectorProvider.jsx';
@@ -168,17 +168,6 @@ function App() {
       engine.scene.lights.forEach(light => engine.scene.deleteEntity(light.id));
     }
 
-    const defaultSceneData = {
-      lights: [
-        {
-          type: LIGHT_TYPES.DIRECTIONAL,
-          ambient: { x: 1, y: 1, z: 1 },
-          diffuse: { x: 1, y: 1, z: 1 },
-          specular: { x: 1, y: 1, z: 1 },
-          direction: { x: -0.2, y: -1.0, z: -0.3}
-        }
-      ],
-    }
     engine.scene = new Scene(engine, defaultSceneData);
     const { entity, newOptions } = getFirstLightData();
     setSelectedEntityOptions(newOptions);
