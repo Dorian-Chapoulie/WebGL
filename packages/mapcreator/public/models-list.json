@@ -4,6 +4,10 @@
     "modelPath": "/models/Gltf/scene.gltf"
   },
   {
+    "type": "de_dust2",
+    "modelPath": "/models/de_dust2/scene.gltf"
+  },
+  {
     "type": "test",
     "modelPath": "/models/test/low_poly_lion.gltf"
   },
