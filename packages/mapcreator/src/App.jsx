@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { mat4, vec3 } from "gl-matrix";
 import { Engine, defaultSceneData } from '../../../lib/Engine/Engine.js'
 import { Workspace } from './Components/Library/Workspace.jsx';
 import { EntityOptions } from './Components/EntityOptions/EntityOptions.jsx';
 import { useEntitySelector } from './Components/EntitySelectorProvider/EntitySelectorProvider.jsx';
-import { Light, LIGHT_TYPES } from '../../../lib/Engine/Light/Light.js';
+import { Light } from '../../../lib/Engine/Light/Light.js';
 import { MenuBar } from './Components/MenuBar/MenuBar.jsx';
 import { Scene } from '../../../lib/Engine/Scene.js';
 
@@ -11,20 +12,108 @@ import './App.css'
 
 function App() {
   const { setSelectedEntity, setSelectedEntityOptions } = useEntitySelector();
-  const [engine, setEngine] =  useState(null);
+  const engineRef = useRef(null);
+  const canvasRef = useRef(null);
   const [fps, setFps] = useState(0);
 
+  const handleKeyDown = useCallback((e) => {
+    const engine = engineRef.current;
+    if (!engine) return;
+    if (e.code === 'Escape') {
+      document.exitPointerLock();
+      return;
+    }
+
+    console.debug(e);   
+        
+    const right = vec3.create();
+        
+    if (e.code === 'KeyW') {
+      const forward = vec3.create();
+      vec3.scale(forward, engine.cameraFront, engine.cameraSpeed);
+      vec3.add(engine.cameraPosition, engine.cameraPosition, forward);
+    }
+    if (e.code === 'KeyS') {
+      const backward = vec3.create();
+      vec3.scale(backward, engine.cameraFront, engine.cameraSpeed);
+      vec3.subtract(engine.cameraPosition, engine.cameraPosition, backward);
+    }
+    if (e.code === 'KeyA') {
+      vec3.cross(right, engine.cameraFront, engine.cameraUp);
+      vec3.normalize(right, right);
+      vec3.scale(right, right, engine.cameraSpeed);
+      vec3.subtract(engine.cameraPosition, engine.cameraPosition, right);
+    }
+    if (e.code === 'KeyD') {
+      vec3.cross(right, engine.cameraFront, engine.cameraUp);
+      vec3.normalize(right, right);
+      vec3.scale(right, right, engine.cameraSpeed);
+      vec3.add(engine.cameraPosition, engine.cameraPosition, right);
+    }
+        
+    // Update view matrix after camera movement
+    const target = vec3.create();
+    vec3.add(target, engine.cameraPosition, engine.cameraFront);
+    mat4.lookAt(engine.viewMatrix, engine.cameraPosition, target, engine.cameraUp);
+  }, []);
+
+  const handleMouseMove = useCallback((e) => {
+    const engine = engineRef.current;
+    if (!engine) return;
+    // Only handle mouse movement when pointer is locked
+    if (document.pointerLockElement !== canvasRef.current) {
+      return;
+    }
+        
+    // When using pointer lock, use movementX and movementY instead of clientX/clientY
+    const xoffset = e.movementX || 0;
+    const yoffset = -(e.movementY || 0); // Invert Y-axis for natural mouse look
+
+
+    const adjustedXoffset = xoffset * engine.sensitivity;
+    const adjustedYoffset = yoffset * engine.sensitivity;
+
+    engine.yaw += adjustedXoffset;
+    engine.pitch += adjustedYoffset;
+    
+    if (engine.pitch > 89.0)
+      engine.pitch = 89.0;
+    if (engine.pitch < -89.0)
+      engine.pitch = -89.0;
+
+    if (engine.yaw > 360.0)
+      engine.yaw = 0.0;
+    if (engine.yaw < -360.0)
+      engine.yaw = 0.0;
+    
+    // Calculate new camera front direction
+    const direction = vec3.create();
+    direction[0] = Math.cos(engine.yaw * Math.PI / 180) * Math.cos(engine.pitch * Math.PI / 180);
+    direction[1] = Math.sin(engine.pitch * Math.PI / 180);
+    direction[2] = Math.sin(engine.yaw * Math.PI / 180) * Math.cos(engine.pitch * Math.PI / 180);
+    vec3.normalize(engine.cameraFront, direction);
+        
+    // Update view matrix after mouse movement
+    const target = vec3.create();
+    vec3.add(target, engine.cameraPosition, engine.cameraFront);
+    mat4.lookAt(engine.viewMatrix, engine.cameraPosition, target, engine.cameraUp);
+  }, []);
+
   useEffect(() => {
+    const engine = engineRef.current;
     if (!engine) {
       Light.pointLightCount = 0;
       Light.spotLightCount = 0;
       Light.directionalLightCount = 0;
-      setEngine(new Engine("glCanvas"));
+      engineRef.current = new Engine("glCanvas");
+      window.addEventListener('keydown', handleKeyDown);
+      document.addEventListener('mousemove', handleMouseMove);
     }
-  }, [engine]);
+  }, [handleKeyDown, handleMouseMove]);
 
   // Setup canvas resize and render loop when engine is ready
   useEffect(() => {
+    const engine = engineRef.current;
     if (!engine) return;
     engine.startAutoSave();
 
@@ -83,12 +172,13 @@ function App() {
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
-      if (engine) engine.destroy();
       resizeObserver.disconnect();
     };
-  }, [engine, setSelectedEntity]);
+  }, [setSelectedEntity]);
 
   const getFirstLightData = useCallback(() => {
+    const engine = engineRef.current;
+    if (!engine || !engine.scene || engine.scene.lights.length === 0) return {};
     const entity = engine.scene.lights[0]; 
     const newOptions = {};
     Object.keys(entity.getParams()).map((key) => {
@@ -96,17 +186,19 @@ function App() {
       newOptions[key] = value;
     });
     return { entity, newOptions }; 
-  }, [engine]);
-
+  }, []);
+  
   useEffect(() => {
+    const engine = engineRef.current;
     if (!engine || !engine.scene || engine.scene.lights.length === 0) return;
     const { entity, newOptions } = getFirstLightData();
     setSelectedEntityOptions(newOptions);
     setSelectedEntity(entity);
-  }, [getFirstLightData, setSelectedEntity, setSelectedEntityOptions, engine]);
+  }, [getFirstLightData, setSelectedEntity, setSelectedEntityOptions]);
 
 
   const handleClickOpen = () => {
+    const engine = engineRef.current;
     if (!engine) return;
     const input = document.createElement('input');
     input.type = 'file';
@@ -145,6 +237,7 @@ function App() {
   };
 
   const handleClickSave = () => {
+    const engine = engineRef.current;
     if (!engine || !engine.scene) return;
 
     const sceneData = engine.scene.toJSON();
@@ -162,6 +255,7 @@ function App() {
   };
 
   const handleClickNew = async () => {
+    const engine = engineRef.current;
     if (!engine) return;
 
     if (engine.scene) {
@@ -181,13 +275,97 @@ function App() {
       </MenuBar>
       <div className="main-content">
         <div className="canvas-container">
-          <canvas id="glCanvas"></canvas>
+          <canvas ref={canvasRef} id="glCanvas"></canvas>
         </div>
-        <EntityOptions engine={engine} />
+        <EntityOptions engine={engineRef.current} />
       </div>
-      <Workspace engine={engine} />
+      <Workspace engine={engineRef.current} />
     </div>
   )
 }
 
 export default App
+
+
+/*const handleKeyDown = useCallback((e) => {
+    const engine = engineRef.current;
+    if (!engine) return;
+    if (e.code === 'Escape') {
+      document.exitPointerLock();
+      return;
+    }
+
+    console.debug(e);   
+        
+    const right = vec3.create();
+        
+    if (e.code === 'KeyW') {
+      const forward = vec3.create();
+      vec3.scale(forward, engine.cameraFront, engine.cameraSpeed);
+      vec3.add(engine.cameraPosition, engine.cameraPosition, forward);
+    }
+    if (e.code === 'KeyS') {
+      const backward = vec3.create();
+      vec3.scale(backward, engine.cameraFront, engine.cameraSpeed);
+      vec3.subtract(engine.cameraPosition, engine.cameraPosition, backward);
+    }
+    if (e.code === 'KeyA') {
+      vec3.cross(right, engine.cameraFront, engine.cameraUp);
+      vec3.normalize(right, right);
+      vec3.scale(right, right, engine.cameraSpeed);
+      vec3.subtract(engine.cameraPosition, engine.cameraPosition, right);
+    }
+    if (e.code === 'KeyD') {
+      vec3.cross(right, engine.cameraFront, engine.cameraUp);
+      vec3.normalize(right, right);
+      vec3.scale(right, right, engine.cameraSpeed);
+      vec3.add(engine.cameraPosition, engine.cameraPosition, right);
+    }
+        
+    // Update view matrix after camera movement
+    const target = vec3.create();
+    vec3.add(target, engine.cameraPosition, engine.cameraFront);
+    mat4.lookAt(engine.viewMatrix, engine.cameraPosition, target, engine.cameraUp);
+  }, []);
+
+  const handleMouseMove = useCallback((e) => {
+    const engine = engineRef.current;
+    if (!engine) return;
+    // Only handle mouse movement when pointer is locked
+    if (document.pointerLockElement !== canvasRef.current) {
+      return;
+    }
+        
+    // When using pointer lock, use movementX and movementY instead of clientX/clientY
+    const xoffset = e.movementX || 0;
+    const yoffset = -(e.movementY || 0); // Invert Y-axis for natural mouse look
+
+
+    const adjustedXoffset = xoffset * engine.sensitivity;
+    const adjustedYoffset = yoffset * engine.sensitivity;
+
+    engine.yaw += adjustedXoffset;
+    engine.pitch += adjustedYoffset;
+    
+    if (engine.pitch > 89.0)
+      engine.pitch = 89.0;
+    if (engine.pitch < -89.0)
+      engine.pitch = -89.0;
+
+    if (engine.yaw > 360.0)
+      engine.yaw = 0.0;
+    if (engine.yaw < -360.0)
+      engine.yaw = 0.0;
+    
+    // Calculate new camera front direction
+    const direction = vec3.create();
+    direction[0] = Math.cos(engine.yaw * Math.PI / 180) * Math.cos(engine.pitch * Math.PI / 180);
+    direction[1] = Math.sin(engine.pitch * Math.PI / 180);
+    direction[2] = Math.sin(engine.yaw * Math.PI / 180) * Math.cos(engine.pitch * Math.PI / 180);
+    vec3.normalize(engine.cameraFront, direction);
+        
+    // Update view matrix after mouse movement
+    const target = vec3.create();
+    vec3.add(target, engine.cameraPosition, engine.cameraFront);
+    mat4.lookAt(engine.viewMatrix, engine.cameraPosition, target, engine.cameraUp);
+  }, []);*/
