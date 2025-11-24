@@ -50,10 +50,10 @@ const WorkspaceModels = ({ engine }) => {
 
   const handleClick = async (model) => { 
     if (!engine || !engine.scene) return;
-    
+    console.debug('Adding model:', engine.cameraPosition);
     await engine.scene.addModel(
       model.modelPath,
-      { x: engine.cameraPosition[0], y: engine.cameraPosition[1], z: engine.cameraPosition[2] - 5 },
+      { x: engine.cameraPosition[0], y: engine.cameraPosition[1], z: engine.cameraPosition[2] },
     );
     const entity = engine.scene.models[engine.scene.models.length -1];
     setSelectedEntity(entity);
