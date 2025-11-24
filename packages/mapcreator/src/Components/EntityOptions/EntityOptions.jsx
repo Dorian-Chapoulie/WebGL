@@ -1,11 +1,11 @@
 import PropTypes from 'prop-types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from 'reactstrap';
 import { useEntitySelector } from '../EntitySelectorProvider/EntitySelectorProvider';
 
 import './EntityOptions.scss';
 
-const Vector3Input = ({ label, value, onChange, param }) => {
+const Vector3Input = ({ label, value, onChange, param, onMouseLeave }) => {
   const [isRatioEnabled, setIsRatioEnabled] = useState(param.ratio || false);
 	
   const handleChange = (axis, newValue) => {
@@ -23,7 +23,7 @@ const Vector3Input = ({ label, value, onChange, param }) => {
   };
 
   return (
-    <div className="vector3-input">
+    <div className="vector3-input" onMouseLeave={onMouseLeave}>
       <label>{label}</label>
       <div className="inputs">
         <div className="slider-group">
@@ -159,6 +159,36 @@ export const EntityOptions = ({ engine }) => {
               param={currentParam}
               onChange={(newValue) => {
                 selectedEntity[key] = newValue;
+                if (selectedEntity.rigidBody) {
+                  selectedEntity.oldGravityScale = selectedEntity.rigidBody.gravityScale();
+                  selectedEntity.rigidBody.setGravityScale(0);
+                  
+                  if (key === 'position') {
+                    const type = selectedEntity.colliderType;
+                    const rigidbody = selectedEntity.rigidBody;
+                    const currentPosition = newValue;
+                    const currentRotation = rigidbody.rotation();
+                    selectedEntity.rigidBody = undefined;
+                    engine.world.removeRigidBody(rigidbody);
+                    selectedEntity.setupCollider(engine.world, type, currentPosition, currentRotation);
+                  } else if (key === 'rotation') {
+                    const type = selectedEntity.colliderType;
+                    const rigidbody = selectedEntity.rigidBody;
+                    const currentPosition = rigidbody.translation();
+                    const currentRotation = selectedEntity.eulerToQuaternion(newValue.x, newValue.y, newValue.z);
+                    selectedEntity.rigidBody = undefined;
+                    engine.world.removeRigidBody(rigidbody);
+                    selectedEntity.setupCollider(engine.world, type, currentPosition, currentRotation);
+                  } else {
+                    const type = selectedEntity.colliderType;
+                    const rigidbody = selectedEntity.rigidBody;
+                    const currentPosition = rigidbody.translation();
+                    const currentRotation = rigidbody.rotation();
+                    selectedEntity.rigidBody = undefined;
+                    engine.world.removeRigidBody(rigidbody);
+                    selectedEntity.setupCollider(engine.world, type, currentPosition, currentRotation);
+                  }
+                }
                 setSelectedEntityOptions({ ...selectedEntityOptions, [key]: newValue });
               }} 
             />

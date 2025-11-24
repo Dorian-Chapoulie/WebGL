@@ -148,7 +148,7 @@ function App() {
       Light.spotLightCount = 0;
       Light.directionalLightCount = 0;
       engineRef.current = new Engine("glCanvas");
-
+      engineRef.current.isSimulationRunning = false;
       // Initialize camera with orbital controls
       updateCamera();
     }
@@ -273,8 +273,9 @@ function App() {
       reader.onload = (event) => {
         try {
           const sceneData = JSON.parse(event.target.result);
+          const sceneJson = JSON.stringify(sceneData);
+          localStorage.setItem('JINE_SCENE', sceneJson);
 
-          // Clear existing lights
           if (engine.scene) {
             engine.scene.destroy();
           }

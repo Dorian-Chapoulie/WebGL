@@ -25,6 +25,7 @@ const WORKSPACE_TAB = {
   MODELS: 'Models',
   LIGHTS: 'Lights',
   HIERARCHY: 'Hierarchy',
+  SIMULATION: 'Simulation',
 }
 
 const WorkspaceModels = ({ engine }) => {
@@ -158,6 +159,57 @@ const WorkspaceHierarchy = ({ engine }) => {
   )
 }
 
+const WorkspaceSimulation = ({ engine }) => {
+  const [isRunning, setIsRunning] = useState(false);
+
+  useEffect(() => {
+    if (engine) {
+      setIsRunning(engine.isSimulationRunning);
+    }
+  }, [engine]);
+
+  const handleToggleSimulation = () => {
+    if (!engine) return;
+
+    const newState = !isRunning;
+    engine.isSimulationRunning = newState;
+    setIsRunning(newState);
+  };
+
+  return (
+    <div className='p-3'>
+      <div className='d-flex flex-column gap-3'>
+        <Card className='p-3'>
+          <CardTitle>Contrôles de simulation</CardTitle>
+          <div className='d-flex gap-2 mt-2'>
+            <button
+              className='btn btn-primary'
+              onClick={handleToggleSimulation}
+              disabled={!engine}
+            >
+              {isRunning ? 'Stop' : 'Start'}
+            </button>
+            <button
+              className='btn btn-secondary'
+              onMouseDown={() => {
+                if (!engine) return;
+                engine.isSimulationRunning = true;
+              }}
+              onMouseUp={() => {
+                if (!engine) return;
+                engine.isSimulationRunning = false;
+              }}
+              disabled={!engine || isRunning}
+            >
+              Step
+            </button>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 export const Workspace = ({ engine }) => {
   const [category, setCategory] = useState(WORKSPACE_TAB.MODELS);
   return (    
@@ -178,6 +230,11 @@ export const Workspace = ({ engine }) => {
             Hierarchy
           </NavLink>
         </NavItem>
+        <NavItem>
+          <NavLink href="#" active={category === WORKSPACE_TAB.SIMULATION} onClick={() => setCategory(WORKSPACE_TAB.SIMULATION)}>
+            Simulation
+          </NavLink>
+        </NavItem>
       </Nav>
       <TabContent activeTab={category} className='overflow-auto'>
         <TabPane tabId={WORKSPACE_TAB.MODELS}>
@@ -188,6 +245,9 @@ export const Workspace = ({ engine }) => {
         </TabPane>
         <TabPane tabId={WORKSPACE_TAB.HIERARCHY}>
           <WorkspaceHierarchy engine={engine} />
+        </TabPane>
+        <TabPane tabId={WORKSPACE_TAB.SIMULATION}>
+          <WorkspaceSimulation engine={engine} />
         </TabPane>
       </TabContent>
     </div>
