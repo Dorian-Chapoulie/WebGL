@@ -10,6 +10,7 @@ import {
 } from 'reactstrap';
 import { LIGHT_TYPES } from '../../../../../lib/Engine/Light/Light';
 import { useEntitySelector } from '../EntitySelectorProvider/EntitySelectorProvider';
+import { ColliderTypes }  from '../../../../../lib/Engine/models/Model';
 
 
 import './Workspace.scss';
@@ -54,6 +55,7 @@ const WorkspaceModels = ({ engine }) => {
     await engine.scene.addModel(
       model.modelPath,
       { x: engine.cameraPosition[0], y: engine.cameraPosition[1], z: engine.cameraPosition[2] },
+      ColliderTypes.FIXED,
     );
     const entity = engine.scene.models[engine.scene.models.length -1];
     setSelectedEntity(entity);
