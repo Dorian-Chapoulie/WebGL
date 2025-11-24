@@ -1,11 +1,19 @@
 [
   {
+    "type": "Cube",
+    "modelPath": "/models/Cube/Untitled.gltf"
+  },
+  {
     "type": "Gltf",
     "modelPath": "/models/Gltf/scene.gltf"
   },
   {
-    "type": "de_dust2",
-    "modelPath": "/models/de_dust2/Backrooms Packed.gltf"
+    "type": "Sol",
+    "modelPath": "/models/Sol/Untitled.gltf"
+  },
+  {
+    "type": "backrooms",
+    "modelPath": "/models/backrooms/Backrooms Packed.gltf"
   },
   {
     "type": "women",
