@@ -206,10 +206,17 @@ function App() {
     if (entity) {
       const target = ([...engine.scene.models, ...engine.scene.triggers]).find(model => model.id === entity.entityId);
       if (target) setSelectedEntity(target);
+
+      const newOptions = {};
+      Object.keys(target.getParams()).map((key) => {
+        const value = target[key];
+        newOptions[key] = value;
+      });
+      setSelectedEntityOptions(newOptions);
     } else {
       setSelectedEntity(undefined)
     }
-  }, [setSelectedEntity]);
+  }, [setSelectedEntity, setSelectedEntityOptions]);
 
   useEffect(() => {
     const engine = engineRef.current;

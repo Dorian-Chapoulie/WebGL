@@ -130,16 +130,16 @@ FloatInput.propTypes = {
   }).isRequired,
 };
 
-const CheckboxInput = ({ label, value, onChange }) => {
+const StringInput = ({ label, value, onChange }) => {
   return (
-    <div className="vector3-input">
+    <div className="vector3-input d-flex align-items-center gap-3">
       <label>{label}</label>
       <div className="inputs">
         <div className="slider-group">
           <input
-            type="checkbox"
+            type="text"
             checked={value}
-            onChange={(e) => onChange(e.target.checked)}
+            onChange={(e) => onChange(e.target.value)}
             value={value}
             autoComplete='off'
             data-form-type="other"
@@ -150,10 +150,43 @@ const CheckboxInput = ({ label, value, onChange }) => {
   );
 };
 
-CheckboxInput.propTypes = {
+StringInput.propTypes = {
   label: PropTypes.string.isRequired,
   value: PropTypes.number.isRequired,
   onChange: PropTypes.func.isRequired,
+};
+
+const SelectInput = ({ label, value, onChange, param }) => {
+  return (
+    <div className="vector3-input d-flex align-items-center gap-3">
+      <label>{label}</label>
+      <div className="inputs">
+        <div className="slider-group">
+          <select
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            autoComplete='off'
+            data-form-type="other"
+          >
+            {param.options.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+SelectInput.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  param: PropTypes.shape({
+    options: PropTypes.arrayOf(PropTypes.string).isRequired,
+  }).isRequired,
 };
 
 
@@ -203,17 +236,30 @@ export const EntityOptions = ({ engine }) => {
               }} 
             />
           );
-        case 'boolean':
+        case 'string':
           return (
-            <CheckboxInput 
+            <StringInput
               key={key}
-              label={key} 
-              value={selectedEntityOptions[key]} 
+              label={key}
+              value={selectedEntityOptions[key]}
               param={currentParam}
               onChange={(newValue) => {
                 params[key].onChange(engine.world, newValue)
                 setSelectedEntityOptions({ ...selectedEntityOptions, [key]: newValue });
-              }} 
+              }}
+            />
+          );
+        case 'select':
+          return (
+            <SelectInput
+              key={key}
+              label={key}
+              value={selectedEntityOptions[key]}
+              param={currentParam}
+              onChange={(newValue) => {
+                params[key].onChange(engine.world, newValue)
+                setSelectedEntityOptions({ ...selectedEntityOptions, [key]: newValue });
+              }}
             />
           );
         default:
