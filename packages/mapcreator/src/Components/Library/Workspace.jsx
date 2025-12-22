@@ -26,6 +26,7 @@ const WORKSPACE_TAB = {
   LIGHTS: 'Lights',
   HIERARCHY: 'Hierarchy',
   SIMULATION: 'Simulation',
+  TRIGGERS: 'Triggers',
 }
 
 const WorkspaceModels = ({ engine }) => {
@@ -52,7 +53,6 @@ const WorkspaceModels = ({ engine }) => {
 
   const handleClick = async (model) => { 
     if (!engine || !engine.scene) return;
-    console.debug('Adding model:', engine.cameraPosition);
     await engine.scene.addModel(
       model.modelPath,
       { x: engine.cameraPosition[0], y: engine.cameraPosition[1], z: engine.cameraPosition[2] },
@@ -114,20 +114,58 @@ const WorkspaceLights = ({ lights, engine }) => {
   )
 }
 
+const WorkspaceTriggers = ({ engine }) => {
+  const { setSelectedEntity, setSelectedEntityOptions } = useEntitySelector();
+ 
+  const handleClick = () => {
+    console.debug('Adding trigger');
+    if (!engine || !engine.scene) return;
+
+    const defaultTriggerData = {
+      position: {x: engine.cameraPosition[0], y: engine.cameraPosition[1], z: engine.cameraPosition[2]},
+      scale: { x: 1, y: 1, z: 1 },
+      id: 'my trigger',
+      onTrigger: () => {
+        console.log('triggered: my trigger');
+      }
+    };
+    const trigger = engine.scene.addTrigger(defaultTriggerData.id, defaultTriggerData.position, defaultTriggerData.scale, defaultTriggerData.onTrigger);
+    setSelectedEntity(trigger);
+    const newOptions = {};
+    Object.keys(trigger.getParams()).map((key) => {
+      const value = trigger[key];
+      newOptions[key] = value;
+    });
+    setSelectedEntityOptions(newOptions);
+  }
+
+  return (
+    <div className='Workspace_models-grid'>
+      <Card onClick={handleClick} className='Workspace_model-item p-2 jutify-content-center align-items-center'>
+        <CardTitle>
+          Add trigger
+        </CardTitle>
+      </Card>
+    </div>
+  )
+}
+
 const WorkspaceHierarchy = ({ engine }) => {
   const { setSelectedEntity, setSelectedEntityOptions, selectedEntity } = useEntitySelector();
 
   const sceneHierarchy = useMemo(() => {
-    if (!engine || !engine.scene) return { lights: [], models: [] };
+    if (!engine || !engine.scene) return { lights: [], models: [], triggers: [] };
     const lights = engine.scene.lights;
     const models = engine.scene.models;
-    return { lights, models };
+    const triggers = engine.scene.triggers;
+    return { lights, models, triggers };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engine, selectedEntity]);
   //hack to refresh the value since engine.scene.lights/models are not reactive
 
   const handleClickItem = (entity) => {
     setSelectedEntity(entity);
+    console.debug('Selected entity:', entity);
 
     const newOptions = {};
     Object.keys(entity.getParams()).map((key) => {
@@ -155,11 +193,19 @@ const WorkspaceHierarchy = ({ engine }) => {
           {model.modelPath.split('/').pop()}
         </Card>
       ))}
+      {sceneHierarchy.triggers.map((trigger, index) => (
+        <Card style={{ border: selectedEntity?.id === trigger.id ? '3px solid #646cff' : 'none' }} onClick={() => handleClickItem(trigger)} key={index} className='Workspace_model-item p-2 jutify-content-center align-items-center'>
+          <CardTitle>
+            {trigger.type} 🎯
+          </CardTitle>
+          {trigger.id}
+        </Card>
+      ))}
     </div>
   )
 }
 
-const WorkspaceSimulation = ({ engine }) => {
+const WorkspaceSimulation = ({ engine, setDrawDebugLines }) => {
   const [isRunning, setIsRunning] = useState(false);
 
   useEffect(() => {
@@ -202,6 +248,12 @@ const WorkspaceSimulation = ({ engine }) => {
               disabled={!engine || isRunning}
             >
               Step
+            </button> <button
+              className='btn btn-primary'
+              onClick={() => setDrawDebugLines((prev) => !prev)}
+              disabled={!engine}
+            >
+              Toggle debug lines
             </button>
           </div>
         </Card>
@@ -210,7 +262,7 @@ const WorkspaceSimulation = ({ engine }) => {
   );
 }
 
-export const Workspace = ({ engine }) => {
+export const Workspace = ({ engine, setDrawDebugLines }) => {
   const [category, setCategory] = useState(WORKSPACE_TAB.MODELS);
   return (    
     <div className="Workspace">
@@ -223,6 +275,11 @@ export const Workspace = ({ engine }) => {
         <NavItem>
           <NavLink href="#" active={category === WORKSPACE_TAB.LIGHTS} onClick={() => setCategory(WORKSPACE_TAB.LIGHTS)}>
             Lights
+          </NavLink>
+        </NavItem>
+        <NavItem>
+          <NavLink href="#" active={category === WORKSPACE_TAB.TRIGGERS} onClick={() => setCategory(WORKSPACE_TAB.TRIGGERS)}>
+            Triggers
           </NavLink>
         </NavItem>
         <NavItem>
@@ -247,7 +304,10 @@ export const Workspace = ({ engine }) => {
           <WorkspaceHierarchy engine={engine} />
         </TabPane>
         <TabPane tabId={WORKSPACE_TAB.SIMULATION}>
-          <WorkspaceSimulation engine={engine} />
+          <WorkspaceSimulation engine={engine} setDrawDebugLines={setDrawDebugLines} />
+        </TabPane>
+        <TabPane tabId={WORKSPACE_TAB.TRIGGERS}>
+          <WorkspaceTriggers engine={engine} />
         </TabPane>
       </TabContent>
     </div>

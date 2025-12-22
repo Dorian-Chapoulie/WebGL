@@ -11,10 +11,11 @@ import { Scene } from '../../../lib/Engine/Scene.js';
 import './App.css'  
 
 function App() {
-  const { setSelectedEntity, setSelectedEntityOptions } = useEntitySelector();
+  const { setSelectedEntity, setSelectedEntityOptions, selectedEntity } = useEntitySelector();
   const engineRef = useRef(null);
   const canvasRef = useRef(null);
   const [fps, setFps] = useState(0);
+  const [drawDebugLines, setDrawDebugLines] = useState(true);
 
   // Blender-style camera state
   const cameraStateRef = useRef({
@@ -50,6 +51,10 @@ function App() {
       state.target[1] + y,
       state.target[2] + z
     );
+
+    // Update cameraFront to point from camera to target
+    vec3.subtract(engine.cameraFront, state.target, engine.cameraPosition);
+    vec3.normalize(engine.cameraFront, engine.cameraFront);
 
     // Update view matrix to look at target
     mat4.lookAt(engine.viewMatrix, engine.cameraPosition, state.target, engine.cameraUp);
@@ -141,6 +146,71 @@ function App() {
     updateCamera();
   }, [updateCamera]);
 
+  const handleMouseClick = useCallback((e) => {
+    const engine = engineRef.current;
+    const canvas = canvasRef.current;
+    if (!engine || !canvas) return;
+
+    // Convertir les coordonnées de la souris en coordonnées normalisées (-1 à 1)
+    const rect = canvas.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / canvas.width) * 2 - 1;
+    const y = -(((e.clientY - rect.top) / canvas.height) * 2 - 1);
+
+    // Créer la matrice de projection inverse
+    const projectionMatrix = engine.projectionMatrix;
+    const viewMatrix = engine.viewMatrix;
+
+    const invProjection = mat4.create();
+    const invView = mat4.create();
+    mat4.invert(invProjection, projectionMatrix);
+    mat4.invert(invView, viewMatrix);
+
+    // Point proche dans l'espace clip (near plane)
+    const nearPoint = vec3.fromValues(x, y, -1);
+    // Point loin dans l'espace clip (far plane)
+    const farPoint = vec3.fromValues(x, y, 1);
+
+    // Convertir en espace view
+    vec3.transformMat4(nearPoint, nearPoint, invProjection);
+    vec3.transformMat4(farPoint, farPoint, invProjection);
+
+    // Convertir en espace world
+    vec3.transformMat4(nearPoint, nearPoint, invView);
+    vec3.transformMat4(farPoint, farPoint, invView);
+
+    // Calculer la direction du rayon
+    const direction = vec3.create();
+    vec3.subtract(direction, farPoint, nearPoint);
+    vec3.normalize(direction, direction);
+
+    // Point de départ (position de la caméra)
+    const startPoint = [
+      engine.cameraPosition[0],
+      engine.cameraPosition[1],
+      engine.cameraPosition[2]
+    ];
+
+    // Point final
+    const rayLength = 1000;
+    // const endPoint = [
+    //   startPoint[0] + direction[0] * rayLength,
+    //   startPoint[1] + direction[1] * rayLength,
+    //   startPoint[2] + direction[2] * rayLength
+    // ];
+
+    const entity = engine.rayCastEntityId(
+      {x: startPoint[0], y: startPoint[1], z: startPoint[2]},
+      {x: direction[0], y: direction[1], z: direction[2]},
+      rayLength,
+    );
+    if (entity) {
+      const target = ([...engine.scene.models, ...engine.scene.triggers]).find(model => model.id === entity.entityId);
+      if (target) setSelectedEntity(target);
+    } else {
+      setSelectedEntity(undefined)
+    }
+  }, [setSelectedEntity]);
+
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine) {
@@ -148,7 +218,7 @@ function App() {
       Light.spotLightCount = 0;
       Light.directionalLightCount = 0;
       engineRef.current = new Engine("glCanvas");
-      engineRef.current.isSimulationRunning = false;
+      //engineRef.current.isSimulationRunning = false;
       // Initialize camera with orbital controls
       updateCamera();
     }
@@ -163,14 +233,16 @@ function App() {
     canvas.addEventListener('mouseup', handleMouseUp);
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('wheel', handleWheel, { passive: false });
+    canvas.addEventListener('click', handleMouseClick);
 
     return () => {
       canvas.removeEventListener('mousedown', handleMouseDown);
       canvas.removeEventListener('mouseup', handleMouseUp);
       canvas.removeEventListener('mousemove', handleMouseMove);
       canvas.removeEventListener('wheel', handleWheel);
+      canvas.removeEventListener('click', handleMouseClick);
     };
-  }, [handleMouseDown, handleMouseUp, handleMouseMove, handleWheel]);
+  }, [handleMouseDown, handleMouseUp, handleMouseMove, handleWheel, handleMouseClick]);
 
   // Setup canvas resize and render loop when engine is ready
   useEffect(() => {
@@ -210,7 +282,14 @@ function App() {
     let fpsUpdateTime = 0;
 
     const render = (currentTime) => {
+      if (!engine.isInitialized) {
+        animationFrameId = requestAnimationFrame(render);
+        return;
+      }
+
       engine.drawScene(currentTime);
+      if (drawDebugLines)engine.drawDebugLines(selectedEntity);
+      
 
       // Calculate FPS
       frameCount++;
@@ -235,7 +314,7 @@ function App() {
       }
       resizeObserver.disconnect();
     };
-  }, [setSelectedEntity]);
+  }, [setSelectedEntity, selectedEntity, drawDebugLines]);
 
   const getFirstLightData = useCallback(() => {
     const engine = engineRef.current;
@@ -341,7 +420,7 @@ function App() {
         </div>
         <EntityOptions engine={engineRef.current} />
       </div>
-      <Workspace engine={engineRef.current} />
+      <Workspace engine={engineRef.current} setDrawDebugLines={setDrawDebugLines} />
     </div>
   )
 }

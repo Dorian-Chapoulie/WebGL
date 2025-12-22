@@ -130,6 +130,33 @@ FloatInput.propTypes = {
   }).isRequired,
 };
 
+const CheckboxInput = ({ label, value, onChange }) => {
+  return (
+    <div className="vector3-input">
+      <label>{label}</label>
+      <div className="inputs">
+        <div className="slider-group">
+          <input
+            type="checkbox"
+            checked={value}
+            onChange={(e) => onChange(e.target.checked)}
+            value={value}
+            autoComplete='off'
+            data-form-type="other"
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+CheckboxInput.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.number.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
+
+
 
 
 export const EntityOptions = ({ engine }) => {
@@ -158,37 +185,7 @@ export const EntityOptions = ({ engine }) => {
               value={selectedEntityOptions[key]} 
               param={currentParam}
               onChange={(newValue) => {
-                selectedEntity[key] = newValue;
-                if (selectedEntity.rigidBody) {
-                  selectedEntity.oldGravityScale = selectedEntity.rigidBody.gravityScale();
-                  selectedEntity.rigidBody.setGravityScale(0);
-                  
-                  if (key === 'position') {
-                    const type = selectedEntity.colliderType;
-                    const rigidbody = selectedEntity.rigidBody;
-                    const currentPosition = newValue;
-                    const currentRotation = rigidbody.rotation();
-                    selectedEntity.rigidBody = undefined;
-                    engine.world.removeRigidBody(rigidbody);
-                    selectedEntity.setupCollider(engine.world, type, currentPosition, currentRotation);
-                  } else if (key === 'rotation') {
-                    const type = selectedEntity.colliderType;
-                    const rigidbody = selectedEntity.rigidBody;
-                    const currentPosition = rigidbody.translation();
-                    const currentRotation = selectedEntity.eulerToQuaternion(newValue.x, newValue.y, newValue.z);
-                    selectedEntity.rigidBody = undefined;
-                    engine.world.removeRigidBody(rigidbody);
-                    selectedEntity.setupCollider(engine.world, type, currentPosition, currentRotation);
-                  } else {
-                    const type = selectedEntity.colliderType;
-                    const rigidbody = selectedEntity.rigidBody;
-                    const currentPosition = rigidbody.translation();
-                    const currentRotation = rigidbody.rotation();
-                    selectedEntity.rigidBody = undefined;
-                    engine.world.removeRigidBody(rigidbody);
-                    selectedEntity.setupCollider(engine.world, type, currentPosition, currentRotation);
-                  }
-                }
+                params[key].onChange(engine.world, newValue)
                 setSelectedEntityOptions({ ...selectedEntityOptions, [key]: newValue });
               }} 
             />
@@ -201,7 +198,20 @@ export const EntityOptions = ({ engine }) => {
               value={selectedEntityOptions[key]} 
               param={currentParam}
               onChange={(newValue) => {
-                selectedEntity[key] = newValue;
+                params[key].onChange(engine.world, newValue)
+                setSelectedEntityOptions({ ...selectedEntityOptions, [key]: newValue });
+              }} 
+            />
+          );
+        case 'boolean':
+          return (
+            <CheckboxInput 
+              key={key}
+              label={key} 
+              value={selectedEntityOptions[key]} 
+              param={currentParam}
+              onChange={(newValue) => {
+                params[key].onChange(engine.world, newValue)
                 setSelectedEntityOptions({ ...selectedEntityOptions, [key]: newValue });
               }} 
             />
